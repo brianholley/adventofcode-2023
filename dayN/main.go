@@ -1,9 +1,9 @@
 package main
 
 import (
+    "adventofcode2023/lib"
     "bufio"
     "fmt"
-    "adventofcode2023/lib"
 )
 
 func main() {
