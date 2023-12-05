@@ -54,3 +54,41 @@ func SumArray(arr []int) int {
 	}
 	return sum
 }
+
+func ParseStringOfIntsSpaceDelimited(str string) []int {
+	numbers := []int{}
+	s := strings.Split(str, " ")
+	for _, v := range s {
+		if len(v) > 0 {
+			n, _ := strconv.Atoi(v)
+			numbers = append(numbers, n)
+		}
+	}
+	return numbers
+}
+
+func IntArrayContains(str []int, value int) bool {
+    for _, v := range str {
+        if v == value {
+            return true
+        }
+    }
+    return false
+}
+
+
+func Max(a int, b int) int {
+	if a > b {
+		return a
+	} else {
+		return b
+	}
+}
+
+func Min(a int, b int) int {
+	if a < b {
+		return a
+	} else {
+		return b
+	}
+}
