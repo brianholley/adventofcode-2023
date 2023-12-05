@@ -76,7 +76,6 @@ func IntArrayContains(str []int, value int) bool {
     return false
 }
 
-
 func Max(a int, b int) int {
 	if a > b {
 		return a
@@ -85,10 +84,30 @@ func Max(a int, b int) int {
 	}
 }
 
+func ArrayMax(arr []int) int {
+	max := arr[0]
+    for i := 1; i < len(arr); i++ {
+        if arr[i] > max {
+            max = arr[i]
+        }
+    }
+    return max
+}
+
 func Min(a int, b int) int {
 	if a < b {
 		return a
 	} else {
 		return b
 	}
+}
+
+func ArrayMin(arr []int) int {
+	min := arr[0]
+    for i := 1; i < len(arr); i++ {
+        if arr[i] < min {
+            min = arr[i]
+        }
+    }
+    return min
 }
