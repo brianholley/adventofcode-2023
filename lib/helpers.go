@@ -115,3 +115,10 @@ func ArrayMin(arr []int) int {
 func ArrayLast(arr []int) int {
 	return arr[len(arr)-1]
 }
+
+func Abs(i int) int {
+	if i < 0 {
+		return -i
+	}
+	return i
+}
