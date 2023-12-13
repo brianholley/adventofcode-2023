@@ -110,19 +110,6 @@ func almostEqual(l1 string, l2 string) bool {
 	return allowedErrors == 0
 }
 
-func findSmudgeCandidates(p pattern) []int {
-	smudges := []int{}
-	for l := range p.rows {
-		for check := l + 1; check < len(p.rows); check += 2 {
-			if almostEqual(p.rows[l], p.rows[check]) {
-				// fmt.Println("Pattern", i, ", Rows almost equal", l, "and", check)
-				smudges = append(smudges, l, check)
-			}
-		}
-	}
-	return smudges
-}
-
 func isPatternMirroredAroundRowWithSmudge(p pattern, l int) bool {
 	usedSmudge := false
 
