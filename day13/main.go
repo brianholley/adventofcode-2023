@@ -44,28 +44,36 @@ func rotate(p pattern) pattern {
 	return pattern{rows, true}
 }
 
+func isPatternMirroredAroundRow(p pattern, l int) bool {
+	if p.rows[l] == p.rows[l+1] {
+		up, down := l-1, l+2
+		for up >= 0 && down < len(p.rows) {
+			if p.rows[up] != p.rows[down] {
+				break
+			}
+			up--
+			down++
+		}
+		if up < 0 || down == len(p.rows) {
+			return true
+		}
+	}
+	return false
+}
+
 func part1(stdin *bufio.Scanner) string {
 
 	patterns := readPatterns(stdin)
 
 	sum := 0
-	for i, p := range patterns {
-		// Horizontal
+	for _, p := range patterns {
 		score := 0
+
+		// Horizontal
 		for l := 0; l < len(p.rows)-1; l++ {
-			if p.rows[l] == p.rows[l+1] {
-				up, down := l-1, l+2
-				for up >= 0 && down < len(p.rows) {
-					if p.rows[up] != p.rows[down] {
-						break
-					}
-					up--
-					down++
-				}
-				if up < 0 || down == len(p.rows) {
-					score += 100 * (l + 1)
-					fmt.Println("Horizontal match at line", (l + 1))
-				}
+			if isPatternMirroredAroundRow(p, l) {
+				score += 100 * (l + 1)
+				// fmt.Println("Horizontal match at line", (l + 1))
 			}
 		}
 
@@ -73,24 +81,14 @@ func part1(stdin *bufio.Scanner) string {
 		if score == 0 {
 			rotated := rotate(p)
 			for l := 0; l < len(rotated.rows)-1; l++ {
-				if rotated.rows[l] == rotated.rows[l+1] {
-					up, down := l-1, l+2
-					for up >= 0 && down < len(rotated.rows) {
-						if rotated.rows[up] != rotated.rows[down] {
-							break
-						}
-						up--
-						down++
-					}
-					if up < 0 || down == len(rotated.rows) {
-						score += (l + 1)
-						fmt.Println("Vertical match at column", (l + 1))
-					}
+				if isPatternMirroredAroundRow(rotated, l) {
+					score += (l + 1)
+					// fmt.Println("Vertical match at column", (l + 1))
 				}
 			}
 		}
 
-		fmt.Println("Score for", (i + 1), ":", score)
+		// fmt.Println("Score for", (i + 1), ":", score)
 
 		sum += score
 	}
@@ -98,6 +96,96 @@ func part1(stdin *bufio.Scanner) string {
 	return fmt.Sprint(sum)
 }
 
+func almostEqual(l1 string, l2 string) bool {
+	allowedErrors := 1
+	for i := range l1 {
+		if l1[i] != l2[i] {
+			if allowedErrors > 0 {
+				allowedErrors--
+			} else {
+				return false
+			}
+		}
+	}
+	return allowedErrors == 0
+}
+
+func findSmudgeCandidates(p pattern) []int {
+	smudges := []int{}
+	for l := range p.rows {
+		for check := l + 1; check < len(p.rows); check += 2 {
+			if almostEqual(p.rows[l], p.rows[check]) {
+				// fmt.Println("Pattern", i, ", Rows almost equal", l, "and", check)
+				smudges = append(smudges, l, check)
+			}
+		}
+	}
+	return smudges
+}
+
+func isPatternMirroredAroundRowWithSmudge(p pattern, l int) bool {
+	usedSmudge := false
+
+	initialRowMatches := p.rows[l] == p.rows[l+1]
+	if !initialRowMatches && almostEqual(p.rows[l], p.rows[l+1]) {
+		initialRowMatches = true
+		usedSmudge = true
+	}
+
+	if initialRowMatches {
+		up, down := l-1, l+2
+		for up >= 0 && down < len(p.rows) {
+			rowsMatch := p.rows[up] == p.rows[down]
+			if !rowsMatch && !usedSmudge && almostEqual(p.rows[up], p.rows[down]) {
+				rowsMatch = true
+				usedSmudge = true
+			}
+
+			if !rowsMatch {
+				break
+			}
+			up--
+			down++
+		}
+		if up < 0 || down == len(p.rows) {
+			return usedSmudge
+		}
+	}
+	return false
+}
+
 func part2(stdin *bufio.Scanner) string {
-	return "part2"
+
+	patterns := readPatterns(stdin)
+
+	sum := 0
+	for _, p := range patterns {
+		score := 0
+
+		// Horizontal
+		for l := 0; l < len(p.rows)-1 && score == 0; l++ {
+			if isPatternMirroredAroundRowWithSmudge(p, l) {
+				score += 100 * (l + 1)
+				// fmt.Println("Horizontal match at line", (l + 1))
+			}
+		}
+
+		// Vertical
+		if score == 0 {
+			rotated := rotate(p)
+			for l := 0; l < len(rotated.rows)-1 && score == 0; l++ {
+				if isPatternMirroredAroundRowWithSmudge(rotated, l) {
+					score += (l + 1)
+					// fmt.Println("Vertical match at column", (l + 1))
+					break
+				}
+			}
+		}
+
+		// fmt.Println("Score for", (i + 1), ":", score)
+
+		sum += score
+	}
+
+	return fmt.Sprint(sum)
 }
