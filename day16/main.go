@@ -33,14 +33,7 @@ func energizedCount(energized [][]int) int {
 	return sum
 }
 
-func part1(stdin *bufio.Scanner) string {
-	field := [][]rune{}
-
-	for stdin.Scan() {
-		line := stdin.Text()
-		field = append(field, []rune(line))
-	}
-
+func runLasers(field [][]rune, startRow int, startCol int, startDir int) int {
 	energized := make([][]int, len(field))
 	for i := range energized {
 		energized[i] = make([]int, len(field[i]))
@@ -49,8 +42,8 @@ func part1(stdin *bufio.Scanner) string {
 		}
 	}
 
-	beams := []beam{{0, 0, EAST}}
-	energized[0][0] = EAST
+	beams := []beam{{startRow, startCol, startDir}}
+	energized[startRow][startCol] = startDir
 
 	newBeams := []beam{}
 	for len(beams) > 0 {
@@ -147,10 +140,46 @@ func part1(stdin *bufio.Scanner) string {
 	}
 
 	sum := energizedCount(energized)
+	return sum
+}
+
+func part1(stdin *bufio.Scanner) string {
+	field := [][]rune{}
+
+	for stdin.Scan() {
+		line := stdin.Text()
+		field = append(field, []rune(line))
+	}
+
+	sum := runLasers(field, 0, 0, EAST)
 
 	return fmt.Sprint(sum)
 }
 
 func part2(stdin *bufio.Scanner) string {
-	return "part2"
+	field := [][]rune{}
+
+	for stdin.Scan() {
+		line := stdin.Text()
+		field = append(field, []rune(line))
+	}
+
+	max := 0
+	for r := range field {
+		energized := runLasers(field, r, 0, EAST)
+		max = lib.Max(max, energized)
+
+		energized = runLasers(field, r, len(field[0])-1, WEST)
+		max = lib.Max(max, energized)
+	}
+
+	for c := range field[0] {
+		energized := runLasers(field, 0, c, SOUTH)
+		max = lib.Max(max, energized)
+
+		energized = runLasers(field, len(field)-1, c, NORTH)
+		max = lib.Max(max, energized)
+	}
+
+	return fmt.Sprint(max)
 }
