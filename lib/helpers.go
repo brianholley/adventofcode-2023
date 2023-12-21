@@ -26,15 +26,24 @@ func Run(part1 PartFn, part2 PartFn) string {
 	}
 }
 
-func Read2dArray(scanner bufio.Scanner) [][]int {
+func Read2dArray(scanner *bufio.Scanner, spaceDelimited bool) [][]int {
 	array := make([][]int, 0)
 	for scanner.Scan() {
-		s := strings.Split(scanner.Text(), " ")
-		row := make([]int, len(s))
-		for i, v := range s {
-			row[i], _ = strconv.Atoi(v)
+		line := scanner.Text()
+		if spaceDelimited {
+			s := strings.Split(line, " ")
+			row := make([]int, len(s))
+			for i, v := range s {
+				row[i], _ = strconv.Atoi(v)
+			}
+			array = append(array, row)
+		} else {
+			row := make([]int, len(line))
+			for i, v := range line {
+				row[i], _ = strconv.Atoi(string(v))
+			}
+			array = append(array, row)
 		}
-		array = append(array, row)
 	}
 	return array
 }
@@ -42,7 +51,10 @@ func Read2dArray(scanner bufio.Scanner) [][]int {
 func Create2dArray(rows int, cols int, defaultValue int) [][]int {
 	arr := make([][]int, rows)
 	for i := 0; i < rows; i++ {
-		arr = append(arr, make([]int, cols, defaultValue))
+		arr[i] = make([]int, cols)
+		for j := 0; j < cols; j++ {
+			arr[i][j] = defaultValue
+		}
 	}
 	return arr
 }
