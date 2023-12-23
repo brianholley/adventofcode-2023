@@ -75,8 +75,16 @@ func printPath(path []int) {
 	fmt.Println()
 }
 
+func arrayNew(length int, value int) []int {
+	arr := make([]int, length)
+	for i := 0; i < length; i++ {
+		arr[i] = value
+	}
+	return arr
+}
+
 // Note: this algorithm for part 1 feels VERY overcomplicated...
-func traverse(heatmap [][]int) (int, []int) {
+func traverse(heatmap [][]int, minDist int, maxDist int) (int, []int) {
 
 	rows := len(heatmap)
 	cols := len(heatmap[0])
@@ -86,10 +94,10 @@ func traverse(heatmap [][]int) (int, []int) {
 		heatloss[i] = make([]lossmap, cols)
 		for j := range heatloss[i] {
 			heatloss[i][j] = lossmap{map[int][]int{
-				NORTH: {math.MaxInt, math.MaxInt, math.MaxInt},
-				EAST:  {math.MaxInt, math.MaxInt, math.MaxInt},
-				SOUTH: {math.MaxInt, math.MaxInt, math.MaxInt},
-				WEST:  {math.MaxInt, math.MaxInt, math.MaxInt},
+				NORTH: arrayNew(maxDist+1, math.MaxInt),
+				EAST:  arrayNew(maxDist+1, math.MaxInt),
+				SOUTH: arrayNew(maxDist+1, math.MaxInt),
+				WEST:  arrayNew(maxDist+1, math.MaxInt),
 			}}
 		}
 	}
@@ -100,14 +108,20 @@ func traverse(heatmap [][]int) (int, []int) {
 	// Build naive case
 	naivePath := []int{}
 	naiveLoss := 0
-	for i, j := 0, 0; i < len(heatmap)-1 && j < len(heatmap[0])-1; {
-		naivePath = append(naivePath, EAST)
-		j++
-		naiveLoss += heatmap[i][j]
+	for i, j := 0, 0; i < len(heatmap)-1 || j < len(heatmap[0])-1; {
+		colStep := lib.Max(lib.Min(maxDist, len(heatmap[0])-minDist-1), minDist)
+		for r := 0; r < colStep && j < len(heatmap[0])-1; r++ {
+			j++
+			naivePath = append(naivePath, EAST)
+			naiveLoss += heatmap[i][j]
+		}
 
-		naivePath = append(naivePath, SOUTH)
-		i++
-		naiveLoss += heatmap[i][j]
+		rowStep := lib.Max(lib.Min(maxDist, len(heatmap)-minDist-1), minDist)
+		for r := 0; r < rowStep && i < len(heatmap)-1; r++ {
+			i++
+			naivePath = append(naivePath, SOUTH)
+			naiveLoss += heatmap[i][j]
+		}
 	}
 	bestPath := naivePath
 	minLoss := naiveLoss
@@ -133,48 +147,84 @@ func traverse(heatmap [][]int) (int, []int) {
 		}
 
 		// Fan out
-		if curr.row < len(heatmap)-1 &&
-			curr.dir != NORTH &&
-			(curr.dir != SOUTH || distance(curr.path, SOUTH) < 3) {
+		if curr.row < len(heatmap)-minDist && curr.dir != NORTH && curr.dir != SOUTH {
+			loss, path, history := curr.loss, curr.path, curr.history
+			for i := 1; i <= maxDist; i++ {
+				row := curr.row + i
+				if row >= len(heatmap) {
+					break
+				}
+				loss += heatmap[row][curr.col]
 
-			loss := curr.loss + heatmap[curr.row+1][curr.col]
-			if loss < heatloss[curr.row+1][curr.col].state[SOUTH][distance(curr.path, SOUTH)] && !isInHistory(curr.row+1, curr.col, curr.history) {
-				heatloss[curr.row+1][curr.col].state[SOUTH][distance(curr.path, SOUTH)] = loss
-				r := route{curr.row + 1, curr.col, loss, SOUTH, addPath(curr.path, SOUTH), addHistory(curr.history, curr.row+1, curr.col)}
-				routes = append(routes, r)
+				if loss < heatloss[row][curr.col].state[SOUTH][i] && !isInHistory(row, curr.col, curr.history) {
+					heatloss[row][curr.col].state[SOUTH][i] = loss
+					if i >= minDist {
+						path = addPath(path, SOUTH)
+						history = addHistory(history, row, curr.col)
+						r := route{row, curr.col, loss, SOUTH, path, history}
+						routes = append(routes, r)
+					}
+				}
 			}
 		}
-		if curr.col < len(heatmap[0])-1 &&
-			curr.dir != WEST &&
-			(curr.dir != EAST || distance(curr.path, EAST) < 3) {
+		if curr.col < len(heatmap[0])-minDist && curr.dir != WEST && curr.dir != EAST {
+			loss, path, history := curr.loss, curr.path, curr.history
+			for i := 1; i <= maxDist; i++ {
+				col := curr.col + i
+				if col >= len(heatmap[0]) {
+					break
+				}
+				loss += heatmap[curr.row][col]
 
-			loss := curr.loss + heatmap[curr.row][curr.col+1]
-			if loss < heatloss[curr.row][curr.col+1].state[EAST][distance(curr.path, EAST)] && !isInHistory(curr.row, curr.col+1, curr.history) {
-				heatloss[curr.row][curr.col+1].state[EAST][distance(curr.path, EAST)] = loss
-				r := route{curr.row, curr.col + 1, loss, EAST, addPath(curr.path, EAST), addHistory(curr.history, curr.row, curr.col+1)}
-				routes = append(routes, r)
+				if loss < heatloss[curr.row][col].state[EAST][i] && !isInHistory(curr.row, col, curr.history) {
+					heatloss[curr.row][col].state[EAST][i] = loss
+					if i >= minDist {
+						path = addPath(path, EAST)
+						history = addHistory(history, curr.row, col)
+						r := route{curr.row, col, loss, EAST, path, history}
+						routes = append(routes, r)
+					}
+				}
 			}
 		}
-		if curr.col > 0 &&
-			curr.dir != EAST &&
-			(curr.dir != WEST || distance(curr.path, WEST) < 3) {
+		if curr.row >= minDist && curr.dir != NORTH && curr.dir != SOUTH {
+			loss, path, history := curr.loss, curr.path, curr.history
+			for i := 1; i <= maxDist; i++ {
+				row := curr.row - i
+				if row < 0 {
+					break
+				}
+				loss += heatmap[row][curr.col]
 
-			loss := curr.loss + heatmap[curr.row][curr.col-1]
-			if loss < heatloss[curr.row][curr.col-1].state[WEST][distance(curr.path, WEST)] && !isInHistory(curr.row, curr.col-1, curr.history) {
-				heatloss[curr.row][curr.col-1].state[WEST][distance(curr.path, WEST)] = loss
-				r := route{curr.row, curr.col - 1, loss, WEST, addPath(curr.path, WEST), addHistory(curr.history, curr.row, curr.col-1)}
-				routes = append(routes, r)
+				if loss < heatloss[row][curr.col].state[NORTH][i] && !isInHistory(row, curr.col, curr.history) {
+					heatloss[row][curr.col].state[NORTH][i] = loss
+					if i >= minDist {
+						path = addPath(path, NORTH)
+						history = addHistory(history, row, curr.col)
+						r := route{row, curr.col, loss, NORTH, path, history}
+						routes = append(routes, r)
+					}
+				}
 			}
 		}
-		if curr.row > 0 &&
-			curr.dir != SOUTH &&
-			(curr.dir != NORTH || distance(curr.path, NORTH) < 3) {
+		if curr.col >= minDist && curr.dir != WEST && curr.dir != EAST {
+			loss, path, history := curr.loss, curr.path, curr.history
+			for i := 1; i <= maxDist; i++ {
+				col := curr.col - i
+				if col < 0 {
+					break
+				}
+				loss += heatmap[curr.row][col]
 
-			loss := curr.loss + heatmap[curr.row-1][curr.col]
-			if loss < heatloss[curr.row-1][curr.col].state[NORTH][distance(curr.path, NORTH)] && !isInHistory(curr.row-1, curr.col, curr.history) {
-				heatloss[curr.row-1][curr.col].state[NORTH][distance(curr.path, NORTH)] = loss
-				r := route{curr.row - 1, curr.col, loss, NORTH, addPath(curr.path, NORTH), addHistory(curr.history, curr.row-1, curr.col)}
-				routes = append(routes, r)
+				if loss < heatloss[curr.row][col].state[WEST][i] && !isInHistory(curr.row, col, curr.history) {
+					heatloss[curr.row][col].state[WEST][i] = loss
+					if i >= minDist {
+						path = addPath(path, WEST)
+						history = addHistory(history, curr.row, col)
+						r := route{curr.row, col, loss, WEST, path, history}
+						routes = append(routes, r)
+					}
+				}
 			}
 		}
 	}
@@ -184,12 +234,16 @@ func traverse(heatmap [][]int) (int, []int) {
 
 func part1(stdin *bufio.Scanner) string {
 	heatmap := lib.Read2dArray(stdin, false)
-	loss, path := traverse(heatmap)
+	loss, path := traverse(heatmap, 1, 3)
 
 	printPath(path)
 	return fmt.Sprint(loss)
 }
 
 func part2(stdin *bufio.Scanner) string {
-	return "part2"
+	heatmap := lib.Read2dArray(stdin, false)
+	loss, path := traverse(heatmap, 4, 10)
+
+	printPath(path)
+	return fmt.Sprint(loss)
 }
