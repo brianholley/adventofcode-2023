@@ -134,3 +134,23 @@ func Abs(i int) int {
 	}
 	return i
 }
+
+func ArrayRemoveItem(arr []int, value int) []int {
+	index := IndexOf(arr, value)
+	if index == -1 {
+		return arr
+	} else if index == len(arr)-1 {
+		return arr[:len(arr)-1]
+	} else {
+		return append(arr[:index], arr[index+1:]...)
+	}
+}
+
+func IndexOf(arr []int, value int) int {
+	for i := range arr {
+		if arr[i] == value {
+			return i
+		}
+	}
+	return -1
+}

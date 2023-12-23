@@ -33,42 +33,7 @@ func parsePos(coord string) pos {
 	return pos{x, y, z}
 }
 
-func isOnFloor(b brick) bool {
-	for _, c := range b.cubes {
-		if c.z == 1 {
-			return true
-		}
-	}
-	return false
-}
-
-// Does a support b?
-func supports(a brick, b brick) bool {
-	if a.falling {
-		return false
-	}
-	for i := range a.cubes {
-		for j := range b.cubes {
-			if a.cubes[i].x == b.cubes[j].x && a.cubes[i].y == b.cubes[j].y && a.cubes[i].z+1 == b.cubes[j].z {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// Note: this could use bounding cubes to drastically speed up collision detection
-func supportedBy(b brick, bricks []brick) []brick {
-	result := []brick{}
-	for i := range bricks {
-		if i != b.index && supports(bricks[i], b) {
-			result = append(result, bricks[i])
-		}
-	}
-	return result
-}
-
-func part1(stdin *bufio.Scanner) string {
+func parseBricks(stdin *bufio.Scanner) []brick {
 	bricks := []brick{}
 	for stdin.Scan() {
 		line := stdin.Text()
@@ -95,12 +60,10 @@ func part1(stdin *bufio.Scanner) string {
 		b := brick{len(bricks), cubes, true, []int{}, []int{}}
 		bricks = append(bricks, b)
 	}
+	return bricks
+}
 
-	// fmt.Println("START")
-	// for i := range bricks {
-	// 	fmt.Println("Brick", i, bricks[i].cubes[0], "~", bricks[i].cubes[len(bricks[i].cubes)-1])
-	// }
-
+func settleBricks(bricks []brick) {
 	falling := true
 	for falling {
 		falling = false
@@ -152,6 +115,46 @@ func part1(stdin *bufio.Scanner) string {
 			bricks[u.index].supports = append(bricks[u.index].supports, i)
 		}
 	}
+}
+
+func isOnFloor(b brick) bool {
+	for _, c := range b.cubes {
+		if c.z == 1 {
+			return true
+		}
+	}
+	return false
+}
+
+// Does a support b?
+func supports(a brick, b brick) bool {
+	if a.falling {
+		return false
+	}
+	for i := range a.cubes {
+		for j := range b.cubes {
+			if a.cubes[i].x == b.cubes[j].x && a.cubes[i].y == b.cubes[j].y && a.cubes[i].z+1 == b.cubes[j].z {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// Note: this could use bounding cubes to drastically speed up collision detection
+func supportedBy(b brick, bricks []brick) []brick {
+	result := []brick{}
+	for i := range bricks {
+		if i != b.index && supports(bricks[i], b) {
+			result = append(result, bricks[i])
+		}
+	}
+	return result
+}
+
+func part1(stdin *bufio.Scanner) string {
+	bricks := parseBricks(stdin)
+	settleBricks(bricks)
 
 	result := 0
 	for i := range bricks {
@@ -174,6 +177,38 @@ func part1(stdin *bufio.Scanner) string {
 }
 
 func part2(stdin *bufio.Scanner) string {
+	bricks := parseBricks(stdin)
+	settleBricks(bricks)
+
 	result := 0
+	for i := range bricks {
+		// fmt.Println("-- Checking brick", i)
+		bricksToCheck := []int{i}
+		fallingBricks := []int{i}
+		for len(bricksToCheck) > 0 {
+			b := bricksToCheck[0]
+			bricksToCheck = bricksToCheck[1:]
+			// fmt.Println("Brick", b, "supports", bricks[b].supports)
+			for _, s := range bricks[b].supports {
+				if lib.IndexOf(fallingBricks, s) == -1 {
+					reducedSupports := make([]int, len(bricks[s].supportedBy))
+					copy(reducedSupports, bricks[s].supportedBy)
+					// fmt.Println("Brick", s, "supported by", reducedSupports)
+					for _, f := range fallingBricks {
+						reducedSupports = lib.ArrayRemoveItem(reducedSupports, f)
+						// fmt.Println("Removing", f, "is", reducedSupports)
+					}
+					if len(reducedSupports) == 0 {
+						fallingBricks = append(fallingBricks, s)
+						bricksToCheck = append(bricksToCheck, s)
+						// fmt.Println("Brick", s, "will fall also")
+					}
+				}
+			}
+		}
+
+		// fmt.Println("Brick", i, "would cause", len(fallingBricks)-1, "bricks to fall")
+		result += len(fallingBricks) - 1
+	}
 	return fmt.Sprint(result)
 }
