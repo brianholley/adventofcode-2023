@@ -190,7 +190,7 @@ func part2(stdin *bufio.Scanner) string {
 			bricksToCheck = bricksToCheck[1:]
 			// fmt.Println("Brick", b, "supports", bricks[b].supports)
 			for _, s := range bricks[b].supports {
-				if lib.IndexOf(fallingBricks, s) == -1 {
+				if lib.ArrayIndexOf(fallingBricks, s) == -1 {
 					reducedSupports := make([]int, len(bricks[s].supportedBy))
 					copy(reducedSupports, bricks[s].supportedBy)
 					// fmt.Println("Brick", s, "supported by", reducedSupports)

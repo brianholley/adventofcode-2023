@@ -59,14 +59,6 @@ func Create2dArray(rows int, cols int, defaultValue int) [][]int {
 	return arr
 }
 
-func SumArray(arr []int) int {
-	sum := 0
-	for _, v := range arr {
-		sum += v
-	}
-	return sum
-}
-
 func ParseStringOfIntsSpaceDelimited(str string) []int {
 	numbers := []int{}
 	s := strings.Split(str, " ")
@@ -77,80 +69,4 @@ func ParseStringOfIntsSpaceDelimited(str string) []int {
 		}
 	}
 	return numbers
-}
-
-func IntArrayContains(str []int, value int) bool {
-	for _, v := range str {
-		if v == value {
-			return true
-		}
-	}
-	return false
-}
-
-func Max(a int, b int) int {
-	if a > b {
-		return a
-	} else {
-		return b
-	}
-}
-
-func ArrayMax(arr []int) int {
-	max := arr[0]
-	for i := 1; i < len(arr); i++ {
-		if arr[i] > max {
-			max = arr[i]
-		}
-	}
-	return max
-}
-
-func Min(a int, b int) int {
-	if a < b {
-		return a
-	} else {
-		return b
-	}
-}
-
-func ArrayMin(arr []int) int {
-	min := arr[0]
-	for i := 1; i < len(arr); i++ {
-		if arr[i] < min {
-			min = arr[i]
-		}
-	}
-	return min
-}
-
-func ArrayLast(arr []int) int {
-	return arr[len(arr)-1]
-}
-
-func Abs(i int) int {
-	if i < 0 {
-		return -i
-	}
-	return i
-}
-
-func ArrayRemoveItem(arr []int, value int) []int {
-	index := IndexOf(arr, value)
-	if index == -1 {
-		return arr
-	} else if index == len(arr)-1 {
-		return arr[:len(arr)-1]
-	} else {
-		return append(arr[:index], arr[index+1:]...)
-	}
-}
-
-func IndexOf(arr []int, value int) int {
-	for i := range arr {
-		if arr[i] == value {
-			return i
-		}
-	}
-	return -1
 }
